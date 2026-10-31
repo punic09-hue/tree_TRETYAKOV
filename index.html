@@ -70,7 +70,10 @@ footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40
 .mrow{background:var(--card);border:1px solid var(--node-b);border-radius:12px;padding:9px 12px;margin:6px 0;font-size:.92em}.mrow b{cursor:pointer}
 .study{background:var(--card);border:1px solid var(--node-b);border-radius:16px;padding:14px 16px;margin:16px 0}
 .study .card{border-bottom:1px dashed var(--node-b);padding:9px 0;font-size:.92em;line-height:1.5;overflow-wrap:anywhere}.study .card:last-child{border:0}
-.study .card div span{color:var(--muted)}.tiles a.on{outline:2px solid var(--accent)}
+.study .card div span{color:var(--muted)}.study .card.pv{display:flex;gap:14px;align-items:flex-start;flex-direction:row-reverse}.study .card.pv .txt{flex:1;min-width:0}
+.study .thumb{flex:none;width:clamp(110px,28vw,240px)}.study .thumb img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:10px;border:1px solid var(--node-b);background:var(--bg)}
+.mapsw{display:flex;background:var(--card);border-radius:18px;padding:3px;box-shadow:0 1px 5px rgba(0,0,0,.3)}.mapsw button{border:0;background:none;color:var(--text);padding:6px 12px;border-radius:15px;font:inherit;font-size:.85em;cursor:pointer}.mapsw button.on{background:var(--brand);color:#fff}
+.tiles a.on{outline:2px solid var(--accent)}
 </style>
 </head>
 <body>
@@ -163,23 +166,29 @@ const link=t=>App.esc(t).replace(/(https?:\/\/[^\s;,)]+)/g,'<a href="$1" target=
 function study(){const k=location.hash.split('/')[2];
  document.getElementById('tiles').innerHTML=Object.entries(ST).map(([key,v])=>`<a href="#/research/${key}" class="${key===k?'on':''}">${v.ico} ${v.title}<small>${v.rows.length} записей</small></a>`).join('');
  const v=ST[k],el=document.getElementById('study');if(!v){el.innerHTML='';return;}
- el.innerHTML=`<div class="study"><h3>${v.ico} ${v.title}</h3>${v.rows.map(r=>`<div class="card"><b>${link(r[0]||'')}</b>${r.slice(1).map((c,i)=>c.trim()?`<div><span>${App.esc(v.cols[i+1])}:</span> ${link(c)}</div>`:'').join('')}</div>`).join('')}</div>`;
+ const ui=v.cols.findIndex(c=>/Ссылка/.test(c)),pv=k==='maps'&&ui>=0;
+ el.innerHTML=`<div class="study"><h3>${v.ico} ${v.title}</h3>${v.rows.map(r=>`<div class="card${pv?' pv':''}">${pv&&r[ui]?`<a class="thumb" href="${App.esc(r[ui])}" target="_blank" rel="noopener"><img loading="lazy" alt="" src="${/\.(jpe?g|png|webp|gif)$/i.test(r[ui])?App.esc(r[ui]):'https://s0.wp.com/mshots/v1/'+encodeURIComponent(r[ui])+'?w=480&h=320'}" onerror="this.parentNode.remove()"></a>`:''}<div class="txt"><b>${link(r[0]||'')}</b>${r.slice(1).map((c,i)=>c.trim()?`<div><span>${App.esc(v.cols[i+1])}:</span> ${link(c)}</div>`:'').join('')}</div></div>`).join('')}</div>`;
  el.scrollIntoView({behavior:'smooth'});}
 /* ---- карта (Leaflet + OpenStreetMap) ---- */
-let MAP=null;const PL=window.TREE_PLACES||[];const coff={};
-function mapInit(){if(MAP||!window.L){if(MAP)MAP.invalidateSize();return;}
- MAP=L.map('map').setView([56.84,60.58],12);
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAP);
+let MAP=null,PROV=(store.get('mapprov')||'yandex');const PL=window.TREE_PLACES||[];const coff={};
+const PROVS={yandex:{n:'Яндекс',crs:()=>L.CRS.EPSG3395,url:'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU',att:'© Яндекс'},
+ google:{n:'Google',crs:()=>L.CRS.EPSG3857,url:'https://mt{s}.google.com/vt/lyrs=m&hl=ru&x={x}&y={y}&z={z}',sub:'0123',att:'© Google'}};
+function mapInit(){if(!window.L)return;if(MAP){MAP.invalidateSize();return;}mapBuild([56.84,60.58],12,true);}
+function mapBuild(c,z,fit){const P=PROVS[PROV];if(MAP){c=MAP.getCenter();z=MAP.getZoom();MAP.remove();}
+ MAP=L.map('map',{crs:P.crs()}).setView(c,z);
+ L.tileLayer(P.url,{maxZoom:19,subdomains:P.sub||'abc',attribution:P.att}).addTo(MAP);
+ const sw=L.control({position:'topright'});sw.onAdd=()=>{const d=L.DomUtil.create('div','mapsw');d.innerHTML=Object.entries(PROVS).map(([k,v])=>`<button data-p="${k}" class="${k===PROV?'on':''}">${v.n}</button>`).join('');
+  L.DomEvent.disableClickPropagation(d);d.querySelectorAll('button').forEach(b=>b.onclick=()=>{PROV=b.dataset.p;store.set('mapprov',PROV);mapBuild();});return d;};sw.addTo(MAP);
  const pts=PL.filter(p=>p.lat&&p.lon);
- pts.forEach(p=>{p.m=L.marker([+p.lat,+p.lon]).bindPopup(`<b>${App.esc(p.name)}</b><br>${App.esc(p.addr||'')}<br><i>${App.esc(p.cat)}${p.period?' · '+App.esc(p.period):''}</i>${p.exact?'':'<br>точка примерная'}`).addTo(MAP);});
- if(pts.length)MAP.fitBounds(pts.map(p=>[+p.lat,+p.lon]),{padding:[30,30],maxZoom:13});
- document.getElementById('mapnote').textContent=`На карте ${pts.length} мест со сверенными координатами из ${PL.length}; остальные — списком ниже со ссылкой на Яндекс.Карты.`;
+ pts.forEach(p=>{p.m=L.marker([+p.lat,+p.lon]).bindPopup(`<b>${App.esc(p.name)}</b><br>${App.esc(p.addr||'')}<br><i>${App.esc(p.cat)}${p.period?' · '+App.esc(p.period):''}</i>${p.exact?'':'<br>точка примерная'}<br><a href="https://yandex.ru/maps/?pt=${p.lon},${p.lat}&z=17&l=map" target="_blank" rel="noopener">Яндекс.Карты</a> · <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Google Maps</a>`);});
+ if(fit&&pts.length)MAP.fitBounds(pts.map(p=>[+p.lat,+p.lon]),{padding:[30,30],maxZoom:13});
+ document.getElementById('mapnote').textContent=`На карте ${pts.length} мест со сверенными координатами из ${PL.length}; остальные — списком ниже со ссылками.`;
  mapList();}
 function mapList(){const cats=[...new Set(PL.map(p=>p.cat))];
  document.getElementById('mapcats').innerHTML=cats.map(c=>`<button class="${coff[c]?'off':''}" data-c="${App.esc(c)}">${App.esc(c)}</button>`).join('');
  document.querySelectorAll('#mapcats button').forEach(b=>b.onclick=()=>{coff[b.dataset.c]^=1;mapList();});
  PL.forEach(p=>{if(p.m){coff[p.cat]?p.m.remove():p.m.addTo(MAP);}});
- document.getElementById('maplist').innerHTML=PL.filter(p=>!coff[p.cat]).map(p=>`<div class="mrow">${p.m?`<b data-id="${p.id}">📍 ${App.esc(p.name)}</b>`:App.esc(p.name)} <span class="muted">· ${App.esc(p.cat)}</span><br><span class="muted">${App.esc(p.addr||'')}</span> ${p.url?`<a href="${p.url}" target="_blank" rel="noopener">Яндекс.Карты</a>`:''}</div>`).join('');
+ document.getElementById('maplist').innerHTML=PL.filter(p=>!coff[p.cat]).map(p=>`<div class="mrow">${p.m?`<b data-id="${p.id}">📍 ${App.esc(p.name)}</b>`:App.esc(p.name)} <span class="muted">· ${App.esc(p.cat)}</span><br><span class="muted">${App.esc(p.addr||'')}</span> ${p.url?`<a href="${p.url}" target="_blank" rel="noopener">Яндекс.Карты</a>`:''} · <a href="https://www.google.com/maps/search/?api=1&query=${p.lat&&p.lon?p.lat+','+p.lon:encodeURIComponent(p.addr||p.name)}" target="_blank" rel="noopener">Google Maps</a></div>`).join('');
  document.querySelectorAll('#maplist b[data-id]').forEach(b=>b.onclick=()=>{const p=PL.find(x=>x.id===b.dataset.id);MAP.setView(p.m.getLatLng(),16);p.m.openPopup();scrollTo({top:0,behavior:'smooth'});});}
 App.init(sec=>{if(!document.getElementById('sec-'+sec))sec='home';secs.forEach(x=>x.classList.toggle('on',x.id==='sec-'+sec));
   document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===sec));
