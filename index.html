@@ -6,6 +6,7 @@
 <meta name="format-detection" content="telephone=no">
 <title>Родословие Третьяковых</title>
 <link rel="stylesheet" href="assets/tree.css">
+<link rel="stylesheet" href="assets/leaflet/leaflet.css">
 <style>
 /* ===== ПАЛИТРЫ. Светлые: blue (как вариант 1), sepia, sage. Тёмные: graphite, navy, cocoa — мягкие, не чёрные ===== */
 :root{--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--serif:"PT Serif",Georgia,"Times New Roman",serif;--r:12px}
@@ -65,6 +66,11 @@ footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40
 @media(max-width:860px){.searchwrap{display:none}.logo .t{display:none}nav.pills .lbl{display:none}nav.pills button{padding:8px 10px}
  .gen{grid-template-columns:1fr}.gen .who{border:0;padding:0}.evs li{grid-template-columns:70px 1fr}}
 @media print{header,footer,.drawer,.tree-bar,.coverpick{display:none!important}}
+#map{height:min(62vh,520px);border-radius:16px;border:1px solid var(--node-b);z-index:0}
+.mrow{background:var(--card);border:1px solid var(--node-b);border-radius:12px;padding:9px 12px;margin:6px 0;font-size:.92em}.mrow b{cursor:pointer}
+.study{background:var(--card);border:1px solid var(--node-b);border-radius:16px;padding:14px 16px;margin:16px 0}
+.study .card{border-bottom:1px dashed var(--node-b);padding:9px 0;font-size:.92em;line-height:1.5;overflow-wrap:anywhere}.study .card:last-child{border:0}
+.study .card div span{color:var(--muted)}.tiles a.on{outline:2px solid var(--accent)}
 </style>
 </head>
 <body>
@@ -98,16 +104,16 @@ footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40
 <section id="sec-sources" class="sec"><h2 class="st" data-ico="sources">Просмотренные источники</h2>
   <div class="srcf" id="srcf"></div><input class="filter" id="sfilter" placeholder="Фильтр: шифр, архив, год, текст…"><div id="srcl" class="srcl"></div></section>
 
-<section id="sec-map" class="sec"><h2 class="st" data-ico="map">Карта</h2><div class="mapdemo">Здесь будет Яндекс.Карта с метками мест и событий (данные — data/places.csv)</div></section>
+<section id="sec-map" class="sec"><h2 class="st" data-ico="map">Карта</h2><p class="muted" id="mapnote"></p><div id="map"></div><div id="mapcats" class="lv"></div><div id="maplist" class="plist"></div></section>
 
 <section id="sec-research" class="sec"><h2 class="st" data-ico="research">Исследование</h2>
   <div class="stats" id="stats"></div>
-  <div class="tiles"><a>🧭 Происхождение рода<small>версии Б, А, Д, В, Ш</small></a><a>⚠️ Расхождения<small>в датах и связях</small></a><a>📝 Задачи поиска<small>план архивной работы</small></a><a>🤝 Круг рода<small>восприемники, поручители</small></a><a>🏙️ В городе<small>Третьяковы Екатеринбурга</small></a><a>🔗 Вне древа<small>не привязанные линии</small></a><a>📜 Историческая справка<small>ВИЗ и Екатеринбург</small></a><a>🖼️ Карты и фото<small>планы, виды завода</small></a></div></section>
+  <div class="tiles" id="tiles"></div><div id="study"></div></section>
 
 <footer>Обновлено 31.10.2026 · <span data-contact></span><br>Сведения о людях, родившихся после 1925 года, не публикуются</footer>
 <div id="drawer" class="drawer"></div>
 
-<script src="data/config.js"></script><script src="data/persons.js"></script><script src="data/families.js"></script><script src="data/sources.js"></script><script src="data/research.js"></script><script src="data/milestones.js"></script><script src="data/places.js"></script><script src="assets/hero-art.js"></script>
+<script src="data/config.js"></script><script src="data/persons.js"></script><script src="data/families.js"></script><script src="data/sources.js"></script><script src="data/research.js"></script><script src="data/milestones.js"></script><script src="data/places.js"></script><script src="data/studies.js"></script><script src="assets/leaflet/leaflet.js"></script><script src="assets/hero-art.js"></script>
 <script src="assets/core.js"></script>
 <script>
 const ICO={home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',tree:'<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V12M5 16.5V12h14v4.5"/>',
@@ -150,9 +156,34 @@ const s=App.stats();document.getElementById('stats').innerHTML=[[s.persons,'пе
 App.bindSearch(document.getElementById('q'),document.getElementById('qres'));
 
 const secs=[...document.querySelectorAll('.sec')];
+
+/* ---- разделы исследования ---- */
+const ST=window.TREE_STUDIES||{};
+const link=t=>App.esc(t).replace(/(https?:\/\/[^\s;,)]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+function study(){const k=location.hash.split('/')[2];
+ document.getElementById('tiles').innerHTML=Object.entries(ST).map(([key,v])=>`<a href="#/research/${key}" class="${key===k?'on':''}">${v.ico} ${v.title}<small>${v.rows.length} записей</small></a>`).join('');
+ const v=ST[k],el=document.getElementById('study');if(!v){el.innerHTML='';return;}
+ el.innerHTML=`<div class="study"><h3>${v.ico} ${v.title}</h3>${v.rows.map(r=>`<div class="card"><b>${link(r[0]||'')}</b>${r.slice(1).map((c,i)=>c.trim()?`<div><span>${App.esc(v.cols[i+1])}:</span> ${link(c)}</div>`:'').join('')}</div>`).join('')}</div>`;
+ el.scrollIntoView({behavior:'smooth'});}
+/* ---- карта (Leaflet + OpenStreetMap) ---- */
+let MAP=null;const PL=window.TREE_PLACES||[];const coff={};
+function mapInit(){if(MAP||!window.L){if(MAP)MAP.invalidateSize();return;}
+ MAP=L.map('map').setView([56.84,60.58],12);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAP);
+ const pts=PL.filter(p=>p.lat&&p.lon);
+ pts.forEach(p=>{p.m=L.marker([+p.lat,+p.lon]).bindPopup(`<b>${App.esc(p.name)}</b><br>${App.esc(p.addr||'')}<br><i>${App.esc(p.cat)}${p.period?' · '+App.esc(p.period):''}</i>${p.exact?'':'<br>точка примерная'}`).addTo(MAP);});
+ if(pts.length)MAP.fitBounds(pts.map(p=>[+p.lat,+p.lon]),{padding:[30,30],maxZoom:13});
+ document.getElementById('mapnote').textContent=`На карте ${pts.length} мест со сверенными координатами из ${PL.length}; остальные — списком ниже со ссылкой на Яндекс.Карты.`;
+ mapList();}
+function mapList(){const cats=[...new Set(PL.map(p=>p.cat))];
+ document.getElementById('mapcats').innerHTML=cats.map(c=>`<button class="${coff[c]?'off':''}" data-c="${App.esc(c)}">${App.esc(c)}</button>`).join('');
+ document.querySelectorAll('#mapcats button').forEach(b=>b.onclick=()=>{coff[b.dataset.c]^=1;mapList();});
+ PL.forEach(p=>{if(p.m){coff[p.cat]?p.m.remove():p.m.addTo(MAP);}});
+ document.getElementById('maplist').innerHTML=PL.filter(p=>!coff[p.cat]).map(p=>`<div class="mrow">${p.m?`<b data-id="${p.id}">📍 ${App.esc(p.name)}</b>`:App.esc(p.name)} <span class="muted">· ${App.esc(p.cat)}</span><br><span class="muted">${App.esc(p.addr||'')}</span> ${p.url?`<a href="${p.url}" target="_blank" rel="noopener">Яндекс.Карты</a>`:''}</div>`).join('');
+ document.querySelectorAll('#maplist b[data-id]').forEach(b=>b.onclick=()=>{const p=PL.find(x=>x.id===b.dataset.id);MAP.setView(p.m.getLatLng(),16);p.m.openPopup();scrollTo({top:0,behavior:'smooth'});});}
 App.init(sec=>{if(!document.getElementById('sec-'+sec))sec='home';secs.forEach(x=>x.classList.toggle('on',x.id==='sec-'+sec));
   document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===sec));
-  if(sec==='tree')App.Tree.render();scrollTo(0,0);});
+  if(sec==='tree')App.Tree.render();scrollTo(0,0);if(sec==='map')setTimeout(mapInit,0);if(sec==='research')study();});
 </script>
 </body>
 </html>
