@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>Родословие Третьяковых</title>
+<title>Родословие</title>
 <link rel="stylesheet" href="assets/tree.css">
 <link rel="stylesheet" href="assets/leaflet/leaflet.css">
 <style>
@@ -79,14 +79,14 @@ footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40
 </head>
 <body>
 <header>
-  <span class="logo" onclick="location.hash='#/home'">🌳 <span class="t">Третьяковы</span></span>
+  <span class="logo" onclick="location.hash='#/home'">🌳 <span class="t" id="cShort"></span></span>
   <nav class="pills" id="nav"></nav>
   <div class="searchwrap"><input id="q" placeholder="Поиск по людям…" aria-label="Поиск"><div id="qres" class="search-res"></div></div>
   <button class="hbtn" id="themeBtn" title="Светлая / тёмная тема">🌙</button>
 </header>
 
 <section id="sec-home" class="sec">
-  <div class="cv1"><div class="cv-text"><div class="kick">Родословие · Верх-Исетский завод · Екатеринбург</div><h1>Род Третьяковых</h1></div>
+  <div class="cv1"><div class="cv-text"><div class="kick" id="cKick"></div><h1 id="cHead"></h1></div>
     <svg class="cv-art" id="cvArt" viewBox="0 0 600 280" preserveAspectRatio="xMaxYMax meet" aria-hidden="true"></svg></div>
 
   <div class="lv" id="lvf"></div>
@@ -114,7 +114,7 @@ footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40
   <div class="stats" id="stats"></div>
   <div class="tiles" id="tiles"></div><div id="study"></div></section>
 
-<footer>Обновлено 31.10.2026 · <span data-contact></span><br>Сведения о людях, родившихся после 1925 года, не публикуются</footer>
+<footer>Обновлено <span id="cUpd"></span> · <span data-contact></span><br>Сведения о людях, родившихся после <span id="cCut"></span> года, не публикуются</footer>
 <div id="drawer" class="drawer"></div>
 
 <script src="data/config.js"></script><script src="data/persons.js"></script><script src="data/families.js"></script><script src="data/sources.js"></script><script src="data/research.js"></script><script src="data/milestones.js"></script><script src="data/places.js"></script><script src="data/studies.js"></script><script src="assets/leaflet/leaflet.js"></script><script src="assets/hero-art.js"></script>
@@ -135,11 +135,12 @@ const H=document.documentElement, store={get:k=>{try{return localStorage.getItem
 let theme=store.get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
 function applyTheme(){H.dataset.theme=theme;document.getElementById('themeBtn').textContent=theme==='dark'?'☀️':'🌙';}
 document.getElementById('themeBtn').onclick=()=>{theme=theme==='dark'?'light':'dark';store.set('theme',theme);applyTheme();};applyTheme();
-document.getElementById('cvArt').innerHTML=window.HERO_ART.dam.svg;
+const CF=window.TREE_CONFIG;document.title=CF.pageTitle||CF.title;[['cShort',CF.short],['cKick',CF.kicker],['cHead',CF.heading||CF.title],['cUpd',CF.updated],['cCut',CF.cutoff]].forEach(([i,v])=>{const e=document.getElementById(i);if(e)e.textContent=v??'';});
+document.getElementById('cvArt').innerHTML=(window.HERO_ART[CF.heroArt]||Object.values(window.HERO_ART)[0]).svg;
 
 /* ---- главная: прямая линия на обложках и вехи по поколениям ---- */
 const P=App.P, line=App.MS.map(g=>App.byKey(g.ids[0])).filter(Boolean);
-const LV={viz:['Верх-Исетский завод'],ekb:['Екатеринбург'],ru:['Россия'],world:['Мир']};const on={viz:1,ekb:1,ru:1,world:1};
+const LV=Object.fromEntries(Object.entries(CF.levels||{viz:'Завод',ekb:'Город',ru:'Россия',world:'Мир'}).map(([k,v])=>[k,[v]]));const on={viz:1,ekb:1,ru:1,world:1};
 function gens(){document.getElementById('lvf').innerHTML='<span class="muted" style="align-self:center;font-size:.9em">Показывать события:</span>'+Object.keys(LV).map(k=>`<button class="l-${k} ${on[k]?'':'off'}" onclick="on['${k}']^=1;gens()"><span class="dot" style="background:var(--lc)"></span>${LV[k][0]}</button>`).join('');
  document.getElementById('gens').innerHTML=App.MS.map(g=>{const faces=g.ids.map(id=>App.byKey(id)).filter(Boolean);
   return `<div class="gen"><div class="who"><div class="yrs">${g.years}</div><h3>${faces.length?faces.map(p=>`<a class="plink" href="#/person/${p.id}">${App.esc(p.name)}</a>`).join(' и '):App.esc(g.who)}</h3>
@@ -188,7 +189,7 @@ function addGeo(p){p.m=L.circleMarker(p.g,{radius:8,color:'#C55A11',weight:2,fil
 async function geoRun(){if(GQ)return;GQ=PL.filter(p=>!p.lat&&p.geo&&!p.g);
  for(const p of GQ){if(GC[p.geo]===undefined){try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ru&q='+encodeURIComponent(p.geo));const j=await r.json();GC[p.geo]=j[0]?[+j[0].lat,+j[0].lon]:null;store.set('geo1',JSON.stringify(GC));}catch(e){continue;}await new Promise(r=>setTimeout(r,1100));}
   if(GC[p.geo]){p.g=GC[p.geo];if(MAP)addGeo(p);mapList();}}}
-function mapInit(){if(!window.L)return;if(MAP){MAP.invalidateSize();return;}mapBuild([56.84,60.58],12,true);}
+function mapInit(){if(!window.L)return;if(MAP){MAP.invalidateSize();return;}mapBuild(CF.mapCenter||[55.75,37.62],CF.mapZoom||11,true);}
 function mapBuild(c,z,fit){const P=PROVS[PROV];if(MAP){c=MAP.getCenter();z=MAP.getZoom();MAP.remove();}
  MAP=L.map('map',{crs:P.crs()}).setView(c,z);
  L.tileLayer(P.url,{maxZoom:19,subdomains:P.sub||'abc',attribution:P.att}).addTo(MAP);
