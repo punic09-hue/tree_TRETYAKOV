@@ -5,6 +5,8 @@ import csv,json,re,sys
 P=open('data/persons.js',encoding='utf-8').read();P=json.loads(P[P.index('['):P.rindex(']')+1])
 names={p['name'].replace('(','').replace(')','').strip() for p in P}
 idx={p['name'].replace('(','').replace(')','').strip():p['id'] for p in P}
+key=lambda n:' '.join(sorted(n.replace('(','').replace(')','').replace('ё','е').split()))
+kidx={key(p['name']):p['id'] for p in P}
 import os
 A={r['Объект'].strip():r['Кто из рода связан'].strip() for r in csv.DictReader(open(os.path.join(os.path.dirname(sys.argv[1]),'11._Адреса_и_геопозиции.csv'),encoding='utf-8-sig'),delimiter=';')}
 rows={r['ID']:r for r in csv.DictReader(open(sys.argv[1],encoding='utf-8-sig'),delimiter=';')}
@@ -21,10 +23,12 @@ for p in d:
     typ,who=rest.split(':',1)
     ppl=[re.split(r',|\(',x)[0].replace('(','').replace(')','').strip() for x in re.split(r'\s+и\s+',who.split(',')[0] if typ.strip()!='Брак' else who)]
     ppl=[x for x in ppl if x]
-    if not ppl or not all(x in names for x in ppl): continue
-    ev.append({'d':date.strip().rstrip('-').strip(),'t':typ.strip(),'w':who.strip(),'ids':[idx[x] for x in ppl]})
+    ids=[kidx.get(key(x)) for x in ppl]
+    y=re.findall(r'(1[6-9]\d\d|20\d\d)',date); early=bool(y) and max(map(int,y))<=1925
+    ok=bool(ppl) and (all(ids) or early)  # событие до 1925 г. — все участники родились до 1925
+    ev.append({'d':date.strip().rstrip('-').strip(),'t':typ.strip(),'w':who.strip() if ok else '','ids':[i for i in ids if i] if ok else [],'hid':(not ok) and bool(y) and not early})  # лица после 1925 г.р. — без имён
   p['events']=ev;p['about']='' if 'ПОГРЕБ' in p['cat'] else A.get(p['name'].strip(),'');  # на кладбищах в описаниях есть родившиеся после 1925
-  p['coord']=r['Откуда координаты'].strip();p['src']=r['Источник'].strip()
+  p['coord']=r['Откуда координаты'].strip();p['geo']=r['Строка для геокодера'].strip();p['src']=r['Источник'].strip()
   who=r['Кто из рода связан'].strip();m=re.match(r'(Персон[^.]*\.)',who);p['who']=m.group(1) if m else ''
 open('data/places.js','w',encoding='utf-8').write(pre+json.dumps(d,ensure_ascii=False)+';\n')
 print([(p['id'],len(p['events'])) for p in d if p['lat']])
