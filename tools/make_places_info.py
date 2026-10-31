@@ -23,10 +23,12 @@ for p in d:
     typ,who=rest.split(':',1)
     ppl=[re.split(r',|\(',x)[0].replace('(','').replace(')','').strip() for x in re.split(r'\s+и\s+',who.split(',')[0] if typ.strip()!='Брак' else who)]
     ppl=[x for x in ppl if x]
-    ids=[kidx.get(key(x)) for x in ppl]
     y=re.findall(r'(1[6-9]\d\d|20\d\d)',date); early=bool(y) and max(map(int,y))<=1925
-    ok=bool(ppl) and (all(ids) or early)  # событие до 1925 г. — все участники родились до 1925
-    ev.append({'d':date.strip().rstrip('-').strip(),'t':typ.strip(),'w':who.strip() if ok else '','ids':[i for i in ids if i] if ok else [],'hid':(not ok) and bool(y) and not early})  # лица после 1925 г.р. — без имён
+    # все упоминания «Фамилия Имя Отчество» в тексте должны быть людьми с сайта (там нет родившихся после 1925)
+    fio=re.findall(r'\(?[А-ЯЁ][а-яё]+\)?(?:\s+\d-й)?\s+[А-ЯЁ][а-яё]+(?:\s+\([А-ЯЁ][а-яё]+\))?\s+[А-ЯЁ][а-яё]+(?:вич|вна|ична|ич)\b',who)
+    ids=[kidx.get(key(re.sub(r'\s+\d-й','',f))) or kidx.get(key(f)) for f in fio]
+    ok=early or (all(ids) and not re.search(r'жена|муж|дети',who) or all(ids) and bool(ids))
+    ev.append({'d':date.strip().rstrip('-').strip(),'t':typ.strip(),'w':who.strip() if ok else '','ids':[i for i in ids if i] if ok else [],'hid':not ok})
   p['events']=ev;p['about']='' if 'ПОГРЕБ' in p['cat'] else A.get(p['name'].strip(),'');  # на кладбищах в описаниях есть родившиеся после 1925
   p['coord']=r['Откуда координаты'].strip();p['geo']=r['Строка для геокодера'].strip();p['src']=r['Источник'].strip()
   who=r['Кто из рода связан'].strip();m=re.match(r'(Персон[^.]*\.)',who);p['who']=m.group(1) if m else ''
