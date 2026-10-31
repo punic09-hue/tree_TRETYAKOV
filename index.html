@@ -72,6 +72,7 @@ footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40
 .study .card{border-bottom:1px dashed var(--node-b);padding:9px 0;font-size:.92em;line-height:1.5;overflow-wrap:anywhere}.study .card:last-child{border:0}
 .study .card div span{color:var(--muted)}.study .card.pv{display:flex;gap:14px;align-items:flex-start;flex-direction:row-reverse}.study .card.pv .txt{flex:1;min-width:0}
 .study .thumb{flex:none;width:clamp(110px,28vw,240px)}.study .thumb img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:10px;border:1px solid var(--node-b);background:var(--bg)}
+.pp p{margin:.4em 0;line-height:1.45}.pp ul{margin:.3em 0;padding-left:1.1em}.pp li{margin:2px 0}.pp .pc{font-size:.78em;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);margin-top:4px}.pp .pl{margin-top:6px;font-size:.88em}.mrow summary{cursor:pointer}.mrow .full{margin-top:6px}.leaflet-popup-content{font-size:13px}
 .mapsw{display:flex;background:var(--card);border-radius:18px;padding:3px;box-shadow:0 1px 5px rgba(0,0,0,.3)}.mapsw button{border:0;background:none;color:var(--text);padding:6px 12px;border-radius:15px;font:inherit;font-size:.85em;cursor:pointer}.mapsw button.on{background:var(--brand);color:#fff}
 .tiles a.on{outline:2px solid var(--accent)}
 </style>
@@ -173,6 +174,15 @@ function study(){const k=location.hash.split('/')[2];
 let MAP=null,PROV=(store.get('mapprov')||'yandex');const PL=window.TREE_PLACES||[];const coff={};
 const PROVS={yandex:{n:'Яндекс',crs:()=>L.CRS.EPSG3395,url:'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU',att:'© Яндекс'},
  google:{n:'Google',crs:()=>L.CRS.EPSG3857,url:'https://mt{s}.google.com/vt/lyrs=m&hl=ru&x={x}&y={y}&z={z}',sub:'0123',att:'© Google'}};
+const EVI={'Рождение':'👶','Крещение':'👶','Брак':'💍','Смерть':'✝','Погребение':'⚱','Проживание':'🏠'};
+function placeHtml(p,lim){const ev=p.events||[],more=ev.length>lim;
+ const evh=ev.slice(0,lim).map(e=>`<li><b>${App.esc(e.d)}</b> ${EVI[e.t]||'•'} ${App.esc(e.t)}: ${e.ids.length?`<a href="#/person/${e.ids[0]}">${App.esc(e.w)}</a>`:App.esc(e.w)}</li>`).join('');
+ const ll=p.lat&&p.lon?p.lat+','+p.lon:encodeURIComponent(p.addr||p.name);
+ return `<div class="pp"><div class="pc">${App.esc(p.cat)}${p.period?' · '+App.esc(p.period):''}</div><b>${App.esc(p.name)}</b><div class="muted">${App.esc(p.addr||'')}</div>
+ ${p.about?`<p>${App.esc(p.about)}</p>`:''}${p.who?`<p class="muted">${App.esc(p.who)}</p>`:''}
+ ${ev.length?`<div class="pc">События рода здесь (${ev.length}):</div><ul>${evh}</ul>${more?`<a href="#/map" onclick="openPlace('${p.id}');return false">Все ${ev.length} событий →</a>`:''}`:''}
+ <div class="pl">${p.exact?'':'точка примерная · '}<a href="${p.url||'https://yandex.ru/maps/?text='+ll}" target="_blank" rel="noopener">Яндекс.Карты</a> · <a href="https://www.google.com/maps/search/?api=1&query=${ll}" target="_blank" rel="noopener">Google Maps</a></div></div>`;}
+function openPlace(id){const p=PL.find(x=>x.id===id),el=document.getElementById('pl-'+id);if(el){el.open=true;el.querySelector('.full').innerHTML=placeHtml(p,1e4);el.scrollIntoView({behavior:'smooth'});}}
 function mapInit(){if(!window.L)return;if(MAP){MAP.invalidateSize();return;}mapBuild([56.84,60.58],12,true);}
 function mapBuild(c,z,fit){const P=PROVS[PROV];if(MAP){c=MAP.getCenter();z=MAP.getZoom();MAP.remove();}
  MAP=L.map('map',{crs:P.crs()}).setView(c,z);
@@ -180,7 +190,7 @@ function mapBuild(c,z,fit){const P=PROVS[PROV];if(MAP){c=MAP.getCenter();z=MAP.g
  const sw=L.control({position:'topright'});sw.onAdd=()=>{const d=L.DomUtil.create('div','mapsw');d.innerHTML=Object.entries(PROVS).map(([k,v])=>`<button data-p="${k}" class="${k===PROV?'on':''}">${v.n}</button>`).join('');
   L.DomEvent.disableClickPropagation(d);d.querySelectorAll('button').forEach(b=>b.onclick=()=>{PROV=b.dataset.p;store.set('mapprov',PROV);mapBuild();});return d;};sw.addTo(MAP);
  const pts=PL.filter(p=>p.lat&&p.lon);
- pts.forEach(p=>{p.m=L.marker([+p.lat,+p.lon]).bindPopup(`<b>${App.esc(p.name)}</b><br>${App.esc(p.addr||'')}<br><i>${App.esc(p.cat)}${p.period?' · '+App.esc(p.period):''}</i>${p.exact?'':'<br>точка примерная'}<br><a href="https://yandex.ru/maps/?pt=${p.lon},${p.lat}&z=17&l=map" target="_blank" rel="noopener">Яндекс.Карты</a> · <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Google Maps</a>`);});
+ pts.forEach(p=>{p.m=L.marker([+p.lat,+p.lon]).bindPopup(()=>placeHtml(p,6),{maxWidth:320,maxHeight:360});});
  if(fit&&pts.length)MAP.fitBounds(pts.map(p=>[+p.lat,+p.lon]),{padding:[30,30],maxZoom:13});
  document.getElementById('mapnote').textContent=`На карте ${pts.length} мест со сверенными координатами из ${PL.length}; остальные — списком ниже со ссылками.`;
  mapList();}
@@ -188,8 +198,8 @@ function mapList(){const cats=[...new Set(PL.map(p=>p.cat))];
  document.getElementById('mapcats').innerHTML=cats.map(c=>`<button class="${coff[c]?'off':''}" data-c="${App.esc(c)}">${App.esc(c)}</button>`).join('');
  document.querySelectorAll('#mapcats button').forEach(b=>b.onclick=()=>{coff[b.dataset.c]^=1;mapList();});
  PL.forEach(p=>{if(p.m){coff[p.cat]?p.m.remove():p.m.addTo(MAP);}});
- document.getElementById('maplist').innerHTML=PL.filter(p=>!coff[p.cat]).map(p=>`<div class="mrow">${p.m?`<b data-id="${p.id}">📍 ${App.esc(p.name)}</b>`:App.esc(p.name)} <span class="muted">· ${App.esc(p.cat)}</span><br><span class="muted">${App.esc(p.addr||'')}</span> ${p.url?`<a href="${p.url}" target="_blank" rel="noopener">Яндекс.Карты</a>`:''} · <a href="https://www.google.com/maps/search/?api=1&query=${p.lat&&p.lon?p.lat+','+p.lon:encodeURIComponent(p.addr||p.name)}" target="_blank" rel="noopener">Google Maps</a></div>`).join('');
- document.querySelectorAll('#maplist b[data-id]').forEach(b=>b.onclick=()=>{const p=PL.find(x=>x.id===b.dataset.id);MAP.setView(p.m.getLatLng(),16);p.m.openPopup();scrollTo({top:0,behavior:'smooth'});});}
+ document.getElementById('maplist').innerHTML=PL.filter(p=>!coff[p.cat]).map(p=>`<details class="mrow" id="pl-${p.id}"><summary>${p.m?`<b data-id="${p.id}" title="Показать на карте">📍</b> `:''}${App.esc(p.name)} <span class="muted">· ${App.esc(p.cat)}${(p.events||[]).length?' · событий: '+p.events.length:''}</span></summary><div class="full">${placeHtml(p,1e4)}</div></details>`).join('');
+ document.querySelectorAll('#maplist b[data-id]').forEach(b=>b.onclick=ev=>{ev.preventDefault();const p=PL.find(x=>x.id===b.dataset.id);MAP.setView(p.m.getLatLng(),16);p.m.openPopup();scrollTo({top:0,behavior:'smooth'});});}
 App.init(sec=>{if(!document.getElementById('sec-'+sec))sec='home';secs.forEach(x=>x.classList.toggle('on',x.id==='sec-'+sec));
   document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===sec));
   if(sec==='tree')App.Tree.render();scrollTo(0,0);if(sec==='map')setTimeout(mapInit,0);if(sec==='research')study();});
