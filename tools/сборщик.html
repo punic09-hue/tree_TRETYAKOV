@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сборщик данных сайта</title>
+<style>
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#F3F5F9;color:#1E2430;margin:0;padding:24px;max-width:900px;margin:auto;line-height:1.5}
+h1{color:#2F5597;margin-top:0}.box{background:#fff;border:1px solid #D9E0EA;border-radius:14px;padding:18px 20px;margin:14px 0}
+.box h2{margin:0 0 8px;font-size:1.1em}button,label.btn{background:#2F5597;color:#fff;border:0;border-radius:20px;padding:9px 16px;font:inherit;cursor:pointer;display:inline-block}
+button.sec{background:#fff;color:#2F5597;border:1px solid #2F5597}input[type=file]{display:none}
+.ok{color:#2E7D32}.warn{color:#B26A00}.err{color:#C62828}.muted{color:#667085;font-size:.9em}
+table{border-collapse:collapse;font-size:.9em;margin-top:8px}td,th{border:1px solid #D9E0EA;padding:4px 8px;text-align:left}
+pre{background:#F3F5F9;padding:10px;border-radius:8px;overflow:auto;font-size:.85em;max-height:220px}
+</style></head><body>
+<h1>🔧 Сборщик данных сайта</h1>
+<p>Этот файл работает <b>только у вас на компьютере</b>: выбранные файлы никуда не отправляются. Он превращает выгрузку из GEDKeeper в файлы для сайта и сразу убирает людей, родившихся после 1925 года — полная база в интернет не попадает.</p>
+
+<div class="box"><h2>1. Выгрузка из GEDKeeper (.ged)</h2>
+<p class="muted">GEDKeeper → Файл → Экспорт → GEDCOM. Выберите получившийся файл.</p>
+<label class="btn">Выбрать файл .ged<input type="file" id="ged" accept=".ged,.GED"></label>
+<label style="margin-left:12px">Граница года рождения: <input type="number" id="cutoff" value="1925" style="width:70px"></label>
+<div id="gedRes"></div></div>
+
+<div class="box" id="saveBox" style="display:none"><h2>2. Сохранить файлы для сайта</h2>
+<p>Положите их в папку <b>data</b> вашей копии сайта (с заменой), затем в GitHub Desktop нажмите <b>Commit</b> и <b>Push</b>.</p>
+<button onclick="save('persons.js')">⬇ persons.js</button> <button onclick="save('persons.csv')">⬇ persons.csv</button>
+<button onclick="save('families.js')">⬇ families.js</button> <button onclick="save('families.csv')">⬇ families.csv</button>
+<button class="sec" onclick="['persons.js','persons.csv','families.js','families.csv'].forEach((f,i)=>setTimeout(()=>save(f),i*400))">⬇ Все четыре</button>
+<p class="muted">Если браузер спросит, разрешите скачивание нескольких файлов.</p></div>
+
+<div class="box"><h2>3. Подготовить фото</h2>
+<p class="muted">Выберите фото — сборщик уменьшит их до 1200 px (JPEG, ≈200–400 КБ) и предложит правильное имя по № из GEDKeeper. Оригиналы храните у себя.</p>
+<label class="btn">Выбрать фото<input type="file" id="ph" accept="image/*" multiple></label>
+<div id="phList"></div></div>
+
+<script>
+let OUT={}, NAMEBYNUM={};
+const $=id=>document.getElementById(id);
+const yr=s=>{const m=/(\d{4})/.exec(s||'');return m?+m[1]:null;};
+const csvq=v=>{v=Array.isArray(v)?v.join(','):String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+function save(n){const blob=new Blob([n.endsWith('.csv')?'﻿'+OUT[n]:OUT[n]],{type:n.endsWith('.csv')?'text/csv':'text/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();}
+
+/* ---- разбор GEDCOM ---- */
+function parseGed(text){
+  const lines=text.split(/\r?\n/), recs={}; let cur=null, path=[];
+  for(const raw of lines){const m=/^\s*(\d+)\s+(@[^@]+@)?\s*(\S+)\s?(.*)$/.exec(raw);if(!m)continue;
+    const lv=+m[1], xref=m[2], tag=m[3], val=m[4]||'';
+    if(lv===0){cur=xref?{xref:xref.replace(/@/g,''),type:tag,tags:[]}:null;if(cur)recs[cur.xref]=cur;path=[cur?cur.tags:null];continue;}
+    if(!cur)continue;const node={tag,val,tags:[]};
+    if(tag==='CONC'||tag==='CONT'){const par=path[lv-1];const last=par&&par[par.length-1];if(last){} const owner=findOwner(path,lv);if(owner)owner.val+=(tag==='CONT'?'\n':'')+val;continue;}
+    const parent=path[lv-1];if(!parent)continue;parent.push(node);path[lv]=node.tags;path.length=lv+1;node._lv=lv;}
+  return recs;
+  function findOwner(path,lv){const arr=path[lv-1];return arr&&arr.length?arr[arr.length-1]:null;}
+}
+const sub=(n,t)=>n.tags.find(x=>x.tag===t), subs=(n,t)=>n.tags.filter(x=>x.tag===t), v=(n,t)=>{const x=n&&sub(n,t);return x?x.val.trim():'';};
+function gdate(d){if(!d)return'';const M={JAN:'01',FEB:'02',MAR:'03',APR:'04',MAY:'05',JUN:'06',JUL:'07',AUG:'08',SEP:'09',OCT:'10',NOV:'11',DEC:'12'};
+  let pre='';d=d.replace(/^(ABT|EST|CAL)\s+/i,()=>{pre='ок. ';return'';}).replace(/^(BEF)\s+/i,()=>{pre='до ';return'';}).replace(/^(AFT)\s+/i,()=>{pre='после ';return'';});
+  const m=/^(?:(\d{1,2})\s+)?(?:([A-Z]{3})\s+)?(\d{3,4})$/i.exec(d.trim());if(!m)return pre+d;
+  return pre+(m[1]?String(m[1]).padStart(2,'0')+'.':'')+(m[2]?M[m[2].toUpperCase()]+'.':'')+m[3];}
+const numOf=x=>(/(\d+)/.exec(x)||[])[1]||'';
+
+function build(recs,cutoff){
+  const I=Object.values(recs).filter(r=>r.type==='INDI'), F=Object.values(recs).filter(r=>r.type==='FAM');
+  const per={};I.forEach(r=>{const n=sub(r,'NAME');let full=n?n.val:'';const sur=(/\/([^/]*)\//.exec(full)||[])[1]||'';const giv=full.replace(/\/[^/]*\//,'').trim();
+    const B=sub(r,'BIRT'),D=sub(r,'DEAT'),BU=sub(r,'BURI');
+    per[r.xref]={id:r.xref,num:numOf(r.xref),name:[sur,giv].filter(Boolean).join(' ')||'(имя не указано)',sex:v(r,'SEX')==='F'?'Ж':'М',
+      b:gdate(v(B,'DATE')),bplace:v(B,'PLAC'),d:gdate(v(D,'DATE'))||(D&&!v(D,'DATE')?'умер(ла), дата неизв.':''),dplace:v(D,'PLAC'),burial:v(BU,'PLAC'),
+      estate:subs(r,'OCCU').map(x=>x.val).join('; '),father:'',mother:'',spouses:[],famc:v(r,'FAMC').replace(/@/g,'')};});
+  const fams=F.map(f=>{const h=v(f,'HUSB').replace(/@/g,''),w=v(f,'WIFE').replace(/@/g,''),k=subs(f,'CHIL').map(x=>x.val.replace(/@/g,''));const M=sub(f,'MARR');
+    k.forEach(c=>{if(per[c]){if(h)per[c].father=h;if(w)per[c].mother=w;}});if(per[h]&&w)per[h].spouses.push(w);if(per[w]&&h)per[w].spouses.push(h);
+    return{id:f.xref,h,w,date:gdate(v(M,'DATE')),kids:k};});
+  /* правило приватности */
+  const hidden=p=>{const b=yr(p.b);if(b!==null)return b>cutoff;for(const q of [per[p.father],per[p.mother]])if(q){const qb=yr(q.b);if(qb!==null&&qb>=cutoff-25)return true;}
+    for(const s of p.spouses.map(x=>per[x]).filter(Boolean)){const sb=yr(s.b);if(sb!==null&&sb>cutoff)return true;}return false;};
+  let changed=true,H=new Set();while(changed){changed=false;for(const p of Object.values(per)){if(H.has(p.id))continue;
+    if(hidden(p)||H.has(p.father)&&!yr(p.b)||H.has(p.mother)&&!yr(p.b)){H.add(p.id);changed=true;}}}
+  const pub=Object.values(per).filter(p=>!H.has(p.id)).map(p=>({...p,father:H.has(p.father)?'':p.father,mother:H.has(p.mother)?'':p.mother,
+     spouses:p.spouses.filter(s=>!H.has(s)),hiddenKids:Object.values(per).filter(k=>H.has(k.id)&&(k.father===p.id||k.mother===p.id)).length}));
+  pub.forEach(p=>delete p.famc);
+  const pf=fams.filter(f=>!(H.has(f.h)&&H.has(f.w))).map(f=>({id:f.id,h:H.has(f.h)?'':f.h,w:H.has(f.w)?'':f.w,date:f.date,kids:f.kids.filter(k=>!H.has(k))}));
+  return{pub,pf,total:I.length,hid:H.size};
+}
+
+$('ged').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer();
+  let text=new TextDecoder('utf-8').decode(buf);const ch=(/\n1 CHAR (\S+)/.exec(text)||[])[1]||'';
+  if(/ANSI|1251|WINDOWS/i.test(ch)||text.includes('�'))text=new TextDecoder('windows-1251').decode(buf);
+  const cutoff=+$('cutoff').value||1925;const recs=parseGed(text);const r=build(recs,cutoff);
+  r.pub.forEach(p=>NAMEBYNUM[p.num]=p.name);
+  const C1=['id','num','name','sex','b','bplace','d','dplace','burial','estate','father','mother','spouses','hiddenKids'];
+  OUT['persons.js']='/* Создано сборщиком '+new Date().toLocaleString('ru')+' из '+f.name+'. Скрыто (род. после '+cutoff+'): '+r.hid+' */\nwindow.TREE_PERSONS='+JSON.stringify(r.pub)+';';
+  OUT['persons.csv']=C1.join(';')+'\n'+r.pub.map(p=>C1.map(k=>csvq(p[k])).join(';')).join('\n');
+  OUT['families.js']='window.TREE_FAMILIES='+JSON.stringify(r.pf)+';';
+  OUT['families.csv']='id;h;w;date;kids\n'+r.pf.map(f=>[f.id,f.h,f.w,f.date,f.kids].map(csvq).join(';')).join('\n');
+  const noDate=r.pub.filter(p=>!yr(p.b)).length;
+  $('gedRes').innerHTML=`<p class="ok">✔ Прочитано: ${r.total} персон, ${r.pf.length} семей. Кодировка: ${ch||'UTF-8'}.</p>
+   <table><tr><th>Попадёт на сайт</th><td><b>${r.pub.length}</b></td></tr><tr><th>Скрыто (род. после ${cutoff} или их потомки без дат)</th><td><b>${r.hid}</b></td></tr>
+   <tr><th>На сайте без года рождения — проверьте, нет ли среди них живущих</th><td class="${noDate?'warn':''}">${noDate}</td></tr></table>
+   <details><summary>Первые 10 персон</summary><pre>${r.pub.slice(0,10).map(p=>p.num+' · '+p.name+' · '+p.b+' — '+p.d).join('\n')}</pre></details>`;
+  $('saveBox').style.display='block';};
+
+/* ---- фото ---- */
+$('ph').onchange=async e=>{const box=$('phList');box.innerHTML='';
+  for(const f of e.target.files){const url=URL.createObjectURL(f);const im=new Image();await new Promise(r=>{im.onload=r;im.src=url;});
+    const k=Math.min(1,1200/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
+    cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);const data=cv.toDataURL('image/jpeg',.85);
+    const guess=(/^(\d+)/.exec(f.name)||[])[1]||'';const row=document.createElement('div');row.className='box';row.style.margin='8px 0';
+    row.innerHTML=`<img src="${data}" style="height:70px;float:left;margin-right:12px;border-radius:6px"><b>${f.name}</b> → ${cv.width}×${cv.height}<br>
+      № в GEDKeeper: <input class="n" value="${guess}" style="width:70px"> <span class="nm muted"></span><br><button>⬇ Сохранить</button>`;
+    const inp=row.querySelector('.n'),nm=row.querySelector('.nm');
+    const ini=n=>{const t=(NAMEBYNUM[n]||'').replace(/[()]/g,'').split(/\s+/).filter(Boolean);return t.length?t[0]+' '+t.slice(1,3).map(x=>x[0]).join(''):'';};
+    const upd=()=>{const i=ini(inp.value);nm.textContent=i?('имя файла: '+inp.value+'_'+i+'.jpg'):(Object.keys(NAMEBYNUM).length?'нет такого № среди публикуемых':'сначала загрузите .ged (шаг 1), чтобы подставилось имя');};
+    inp.oninput=upd;upd();
+    row.querySelector('button').onclick=()=>{const i=ini(inp.value);const a=document.createElement('a');a.href=data;a.download=i?inp.value+'_'+i+'.jpg':f.name.replace(/\.\w+$/,'')+'.jpg';a.click();};
+    box.appendChild(row);}};
+</script>
+</body></html>

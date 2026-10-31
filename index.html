@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>Родословие Третьяковых</title>
+<link rel="stylesheet" href="assets/tree.css">
+<style>
+/* ===== ПАЛИТРЫ. Светлые: blue (как вариант 1), sepia, sage. Тёмные: graphite, navy, cocoa — мягкие, не чёрные ===== */
+:root{--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--serif:"PT Serif",Georgia,"Times New Roman",serif;--r:12px}
+[data-theme=light]{--bg:#F3F5F9;--card:#fff;--text:#1E2430;--muted:#667085;--accent:#C55A11;--brand:#2F5597;--brand2:#1F3864;--line:#9FB0C8;--node:#fff;--node-b:#D9E0EA;--male:#4A78C2;--female:#D0608A;--pri-bg:#FFF6EC;--posbg:#E2EFDA;--negbg:#FCE4E4;--sbg:#fff;--link:#2F5597;--hero1:#1F3864;--hero2:#2F5597}
+[data-theme=dark]{--bg:#1F2A3C;--card:#28354A;--text:#E9EEF6;--muted:#A9B6CA;--accent:#F2B45A;--brand:#8DB4F2;--brand2:#33445E;--line:#56688A;--node:#2D3B52;--node-b:#41536F;--male:#8DB4F2;--female:#F3A0C0;--pri-bg:#3E3A2E;--posbg:#2C4436;--negbg:#4B3340;--sbg:#334360;--link:#A9C7F7;--hero1:#253247;--hero2:#33466A}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);transition:background .2s,color .2s}
+a{color:var(--link)}.muted{color:var(--muted)}
+/* ===== шапка ===== */
+header{position:sticky;top:0;z-index:300;display:flex;gap:10px;align-items:center;padding:8px max(14px,env(safe-area-inset-left));background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--node-b)}
+.logo{font-weight:700;white-space:nowrap;color:var(--brand);cursor:pointer}
+nav.pills{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none;-webkit-overflow-scrolling:touch}nav.pills::-webkit-scrollbar{display:none}
+nav.pills button{border:0;background:none;color:var(--muted);padding:7px 11px;border-radius:20px;font:inherit;font-size:.92em;cursor:pointer;flex:none;display:flex;gap:6px;align-items:center}
+nav.pills button svg{width:17px;height:17px;flex:none}
+nav.pills button.on{background:var(--brand);color:#fff}[data-theme=dark] nav.pills button.on{color:var(--bg)}
+.searchwrap{position:relative;width:220px}.searchwrap input{width:100%;padding:8px 13px;border-radius:20px;border:1px solid var(--node-b);font-size:16px;background:var(--sbg);color:var(--text)}
+.hbtn{border:1px solid var(--node-b);background:var(--sbg);color:var(--text);height:36px;min-width:36px;border-radius:18px;cursor:pointer;font-size:15px;padding:0 9px}
+/* панель оформления */
+/* ===== разделы ===== */
+.sec{display:none;max-width:1200px;margin:0 auto;padding:18px 16px 30px}.sec.on{display:block}#sec-tree.sec{max-width:none}
+h2.st{margin:.2em 0 .7em;display:flex;gap:10px;align-items:center}h2.st svg{width:26px;height:26px;color:var(--brand)}
+/* ===== обложки (4 варианта) ===== */
+
+.cv1{position:relative;overflow:hidden;min-height:clamp(240px,34vw,380px);display:flex;align-items:center;margin:0 -16px;padding:clamp(40px,9vw,110px) 6vw;color:#fff;border-radius:0 0 28px 28px;background:radial-gradient(ellipse at 80% 10%,rgba(255,255,255,.18),transparent 55%),linear-gradient(135deg,var(--hero1),var(--hero2))}
+.cv-text{position:relative;z-index:1}.cv-art{position:absolute;right:0;bottom:0;width:min(56%,700px);height:92%}
+.artpick{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:8px 0 0}.artpick button{border:1px solid var(--node-b);background:var(--card);color:var(--muted);border-radius:16px;padding:4px 11px;font:inherit;font-size:.8em;cursor:pointer}.artpick button.on{color:var(--accent);border-color:var(--accent)}
+@media(max-width:700px){.cv1{align-items:flex-start;min-height:330px}.cv-art{width:100%;height:58%;opacity:.55}}
+.cv1 h1{font-size:clamp(2.1em,6vw,4.2em);margin:0;letter-spacing:.01em}.cv1 p{font-size:1.15em;opacity:.9;max-width:640px;line-height:1.6}.cv1 .kick{text-transform:uppercase;letter-spacing:.2em;font-size:.78em;opacity:.8}
+/* ===== вехи по поколениям ===== */
+.lv{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 6px}.lv button{border:1px solid var(--node-b);background:var(--card);color:var(--text);border-radius:20px;padding:6px 12px;font:inherit;font-size:.85em;cursor:pointer;display:flex;gap:6px;align-items:center}
+.lv button.off{opacity:.45}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.l-viz{--lc:#C55A11}.l-ekb{--lc:#2F80ED}.l-ru{--lc:#27AE60}.l-world{--lc:#9B51E0}
+.gen{background:var(--card);border:1px solid var(--node-b);border-radius:20px;padding:20px 20px 10px;margin:16px 0;display:grid;grid-template-columns:240px 1fr;gap:20px}
+.gen .who{border-right:1px solid var(--node-b);padding-right:16px}.gen .who h3{margin:0 0 4px;font-size:1.08em}.gen .yrs{color:var(--accent);font-weight:700;font-size:1.1em}
+.gen .who p{font-size:.88em;color:var(--muted);line-height:1.55}.gen .faces{display:flex;gap:6px;margin:8px 0}.gen .faces a img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--node-b)}
+.evs{list-style:none;margin:0;padding:0}.evs li{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:7px 0;border-bottom:1px dashed var(--node-b);font-size:.93em}
+.evs li:last-child{border:0}.evs .y{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}.evs .tag{font-size:.72em;border-radius:10px;padding:1px 7px;margin-right:6px;color:#fff;background:var(--lc);white-space:nowrap}
+.evs a{text-decoration:none;color:var(--text);border-bottom:1px solid color-mix(in srgb,var(--lc) 50%,transparent)}.evs a:hover{color:var(--lc)}
+/* ===== прочее ===== */
+.tree-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}.seg{display:inline-flex;border:1px solid var(--node-b);border-radius:20px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;color:var(--text);padding:8px 14px;cursor:pointer;font:inherit}.hint{font-size:.82em;color:var(--muted);flex:1 1 260px}
+.modebar{display:none;align-items:center;gap:10px;background:var(--pri-bg);border:1px solid var(--accent);border-radius:12px;padding:7px 12px;font-size:.9em}.modebar button{border:0;background:var(--accent);color:#fff;border-radius:14px;padding:5px 12px;cursor:pointer;font:inherit}
+.filter{width:100%;padding:11px 14px;border:1px solid var(--node-b);border-radius:12px;font-size:16px;background:var(--card);color:var(--text);margin-bottom:10px}
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.plist a{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--node-b);border-radius:12px;padding:8px 10px;color:var(--text);text-decoration:none}.plist small{display:block;color:var(--muted)}
+.srcf{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.srcf button{border:1px solid var(--node-b);background:var(--card);color:var(--text);border-radius:16px;padding:5px 12px;cursor:pointer;font:inherit;font-size:.85em}.srcf button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.srcl{display:flex;flex-direction:column;gap:6px}.srci{background:var(--card);border:1px solid var(--node-b);border-left:4px solid var(--muted);border-radius:10px;padding:9px 12px;font-size:.88em;overflow-wrap:anywhere}
+.srci.pos{border-left-color:#3E9B55}.srci.neg{border-left-color:#C0504D}.srci b{display:block}.srci .m{color:var(--muted);font-size:.9em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 20px}.stats div{background:var(--card);border:1px solid var(--node-b);border-radius:16px;padding:16px;text-align:center}.stats b{display:block;font-size:2em;color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.tiles a{background:var(--card);border:1px solid var(--node-b);border-radius:16px;padding:16px;color:var(--text);text-decoration:none;font-weight:600}.tiles small{display:block;font-weight:400;color:var(--muted);margin-top:4px}
+.mapdemo{height:340px;border-radius:16px;background:var(--card);border:1px dashed var(--node-b);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--muted)}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:var(--card);z-index:500;box-shadow:-12px 0 40px rgba(0,0,0,.3);transform:translateX(105%);transition:transform .25s;overflow:auto;padding:20px 20px 60px;overscroll-behavior:contain}
+.drawer.open{transform:none}.drawer-x{position:sticky;top:0;float:right;border:0;background:var(--bg);color:var(--text);width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2}
+.card h3{font-size:.85em;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:20px 0 6px;border-bottom:1px solid var(--node-b);padding-bottom:4px}
+.card-gen{font-size:.78em;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.facts{width:100%;border-collapse:collapse;font-size:.92em}.facts th{text-align:left;font-weight:500;color:var(--muted);width:38%;padding:5px 8px 5px 0;vertical-align:top}.facts td{padding:5px 0;vertical-align:top}
+footer{text-align:center;font-size:.82em;color:var(--muted);padding:26px 16px 40px;border-top:1px solid var(--node-b);margin-top:20px}
+@media(max-width:860px){.searchwrap{display:none}.logo .t{display:none}nav.pills .lbl{display:none}nav.pills button{padding:8px 10px}
+ .gen{grid-template-columns:1fr}.gen .who{border:0;padding:0}.evs li{grid-template-columns:70px 1fr}}
+@media print{header,footer,.drawer,.tree-bar,.coverpick{display:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo" onclick="location.hash='#/home'">🌳 <span class="t">Третьяковы</span></span>
+  <nav class="pills" id="nav"></nav>
+  <div class="searchwrap"><input id="q" placeholder="Поиск по людям…" aria-label="Поиск"><div id="qres" class="search-res"></div></div>
+  <button class="hbtn" id="themeBtn" title="Светлая / тёмная тема">🌙</button>
+</header>
+
+<section id="sec-home" class="sec">
+  <div class="cv1"><div class="cv-text"><div class="kick">Родословие · Верх-Исетский завод · Екатеринбург</div><h1>Род Третьяковых</h1></div>
+    <svg class="cv-art" id="cvArt" viewBox="0 0 600 280" preserveAspectRatio="xMaxYMax meet" aria-hidden="true"></svg></div>
+
+  <div class="lv" id="lvf"></div>
+  <div id="gens"></div>
+</section>
+
+<section id="sec-tree" class="sec">
+  <div class="tree-bar">
+    <div class="seg"><button onclick="App.Tree.zoom(1)" title="Крупнее">＋</button><button onclick="App.Tree.zoom(-1)" title="Мельче">－</button><button onclick="App.Tree.scale=1;App.Tree.render()" title="Исходный масштаб">⤢</button><button onclick="print()" title="Печать">🖨</button></div>
+    <div class="modebar" id="treeMode"><span></span><button onclick="App.Tree.reset()">Всё древо</button></div>
+    <span class="hint">Нажмите на человека — откроется личная карточка. Предки и потомки строятся из карточки.</span>
+  </div>
+  <div class="tree-scroll"><div class="chart" id="chart"></div></div>
+</section>
+
+<section id="sec-people" class="sec"><h2 class="st" data-ico="people">Люди</h2>
+  <input class="filter" id="pfilter" placeholder="Фильтр: имя, год, приход, № в базе…"><div id="plist" class="plist"></div></section>
+
+<section id="sec-sources" class="sec"><h2 class="st" data-ico="sources">Просмотренные источники</h2>
+  <div class="srcf" id="srcf"></div><input class="filter" id="sfilter" placeholder="Фильтр: шифр, архив, год, текст…"><div id="srcl" class="srcl"></div></section>
+
+<section id="sec-map" class="sec"><h2 class="st" data-ico="map">Карта</h2><div class="mapdemo">Здесь будет Яндекс.Карта с метками мест и событий (данные — data/places.csv)</div></section>
+
+<section id="sec-research" class="sec"><h2 class="st" data-ico="research">Исследование</h2>
+  <div class="stats" id="stats"></div>
+  <div class="tiles"><a>🧭 Происхождение рода<small>версии Б, А, Д, В, Ш</small></a><a>⚠️ Расхождения<small>в датах и связях</small></a><a>📝 Задачи поиска<small>план архивной работы</small></a><a>🤝 Круг рода<small>восприемники, поручители</small></a><a>🏙️ В городе<small>Третьяковы Екатеринбурга</small></a><a>🔗 Вне древа<small>не привязанные линии</small></a><a>📜 Историческая справка<small>ВИЗ и Екатеринбург</small></a><a>🖼️ Карты и фото<small>планы, виды завода</small></a></div></section>
+
+<footer>Обновлено 31.10.2026 · <span data-contact></span><br>Сведения о людях, родившихся после 1925 года, не публикуются</footer>
+<div id="drawer" class="drawer"></div>
+
+<script src="data/config.js"></script><script src="data/persons.js"></script><script src="data/families.js"></script><script src="data/sources.js"></script><script src="data/research.js"></script><script src="data/milestones.js"></script><script src="data/places.js"></script><script src="assets/hero-art.js"></script>
+<script src="assets/core.js"></script>
+<script>
+const ICO={home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',tree:'<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V12M5 16.5V12h14v4.5"/>',
+ people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-4 3.4-6 6.5-6s5.7 2 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14c2.8 0 4.8 1.6 5.5 5"/>',
+ sources:'<path d="M5 3h10l4 4v14H5z"/><path d="M15 3v4h4M8 11h8M8 15h8M8 19h5"/>',map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+ research:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
+const NAV=[['home','Главная'],['tree','Дерево'],['people','Люди'],['sources','Источники'],['map','Карта'],['research','Исследование']];
+document.getElementById('nav').innerHTML=NAV.map(([k,t])=>`<button data-go="${k}">${svg(k)}<span class="lbl">${t}</span></button>`).join('');
+document.querySelectorAll('[data-ico]').forEach(h=>h.insertAdjacentHTML('afterbegin',svg(h.dataset.ico)));
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>location.hash='#/'+b.dataset.go);
+
+/* ---- тема: светлая (синяя) / тёмная (тёмно-синяя); запоминается, если браузер разрешает ---- */
+const H=document.documentElement, store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let theme=store.get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+function applyTheme(){H.dataset.theme=theme;document.getElementById('themeBtn').textContent=theme==='dark'?'☀️':'🌙';}
+document.getElementById('themeBtn').onclick=()=>{theme=theme==='dark'?'light':'dark';store.set('theme',theme);applyTheme();};applyTheme();
+document.getElementById('cvArt').innerHTML=window.HERO_ART.dam.svg;
+
+/* ---- главная: прямая линия на обложках и вехи по поколениям ---- */
+const P=App.P, line=App.MS.map(g=>App.byKey(g.ids[0])).filter(Boolean);
+const LV={viz:['Верх-Исетский завод'],ekb:['Екатеринбург'],ru:['Россия'],world:['Мир']};const on={viz:1,ekb:1,ru:1,world:1};
+function gens(){document.getElementById('lvf').innerHTML='<span class="muted" style="align-self:center;font-size:.9em">Показывать события:</span>'+Object.keys(LV).map(k=>`<button class="l-${k} ${on[k]?'':'off'}" onclick="on['${k}']^=1;gens()"><span class="dot" style="background:var(--lc)"></span>${LV[k][0]}</button>`).join('');
+ document.getElementById('gens').innerHTML=App.MS.map(g=>{const faces=g.ids.map(id=>App.byKey(id)).filter(Boolean);
+  return `<div class="gen"><div class="who"><div class="yrs">${g.years}</div><h3>${faces.length?faces.map(p=>`<a class="plink" href="#/person/${p.id}">${App.esc(p.name)}</a>`).join(' и '):App.esc(g.who)}</h3>
+   <div class="faces">${faces.map(p=>`<a href="#/person/${p.id}" title="${App.esc(p.name)}">${App.img(p,'')}</a>`).join('')}</div><p>${g.intro}</p></div>
+   <ul class="evs">${g.ev.filter(e=>on[e.l]).map(e=>`<li class="l-${e.l}"><span class="y">${e.y}</span><span><span class="tag">${LV[e.l][0]}</span>${e.u?`<a href="${e.u}" target="_blank" rel="noopener">${e.t}</a>`:e.t}</span></li>`).join('')}</ul></div>`;}).join('');}
+gens();
+
+/* ---- люди, источники, исследование ---- */
+const nz=s=>String(s||'').toLowerCase().replace(/ё/g,'е');
+function plist(q){q=nz(q);document.getElementById('plist').innerHTML=App.LIST.filter(p=>nz(p.name+p.b+p.d+p.parish+p.num).includes(q)).map(p=>`<a href="#/person/${p.id}">${App.img(p,'s-ph')}<span><b>${p.pri?'★ ':''}${App.esc(p.name)}</b><small>${App.life(p)}${p.parish?' · '+App.esc(p.parish):''}</small></span></a>`).join('');}
+plist('');document.getElementById('pfilter').oninput=e=>plist(e.target.value);
+let sres='all';
+function slist(){const q=nz(document.getElementById('sfilter').value);const S=App.SRC.filter(s=>(sres==='all'||(sres==='pos'?/ПОЛОЖ/.test(s.res):/ОТРИЦ/.test(s.res)))&&nz(Object.values(s).join(' ')).includes(q));
+ document.getElementById('srcf').innerHTML=[['all','Все',App.SRC.length],['pos','✔ Найдено',App.SRC.filter(s=>/ПОЛОЖ/.test(s.res)).length],['neg','✗ Пусто или сбой',App.SRC.filter(s=>/ОТРИЦ/.test(s.res)).length]].map(([k,t,n])=>`<button class="${sres===k?'on':''}" onclick="sres='${k}';slist()">${t} <b>${n}</b></button>`).join('');
+ document.getElementById('srcl').innerHTML=S.slice(0,400).map(s=>`<div class="srci ${/ПОЛОЖ/.test(s.res)?'pos':/ОТРИЦ/.test(s.res)?'neg':''}"><b>${App.linkify(s.ref)}</b><span class="m">${App.esc(s.type)} · ${App.esc(s.yr)} · проверено: ${App.esc(s.date)}</span><div>Искали: ${App.linkify(s.what)}</div><div>Результат: ${App.linkify(s.got)}</div></div>`).join('')+(S.length>400?`<p class="muted">Показаны первые 400 из ${S.length} — уточните фильтр.</p>`:'');}
+document.getElementById('sfilter').oninput=slist;slist();
+const s=App.stats();document.getElementById('stats').innerHTML=[[s.persons,'персон на сайте'],[s.fams,'семей'],[s.gens,'поколений'],[s.pri,'прямая линия ★'],[s.events,'метрических записей с шифром'],[s.src,'просмотрено источников'],[s.pos,'дали результат'],[s.neg,'пусто или сбой'],[s.hidden,'скрыто (род. после 1925)']].map(([n,t])=>`<div><b>${n}</b>${t}</div>`).join('');
+App.bindSearch(document.getElementById('q'),document.getElementById('qres'));
+
+const secs=[...document.querySelectorAll('.sec')];
+App.init(sec=>{if(!document.getElementById('sec-'+sec))sec='home';secs.forEach(x=>x.classList.toggle('on',x.id==='sec-'+sec));
+  document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===sec));
+  if(sec==='tree')App.Tree.render();scrollTo(0,0);});
+</script>
+</body>
+</html>
