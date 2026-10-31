@@ -1,0 +1,59 @@
+/* Дерево как в образце: пары супругов, вертикальные связи, вложенные ul/li. Цвета берутся из переменных темы. */
+.tree-scroll{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px 10px 40px;touch-action:pan-x pan-y pinch-zoom}
+.chart{transform-origin:0 0;display:inline-block;min-width:100%}
+.chart ul{padding-top:22px;position:relative;display:flex;justify-content:center;margin:0;padding-left:0}
+.chart li{list-style:none;position:relative;padding:22px 6px 0;text-align:center;display:flex;flex-direction:column;align-items:center}
+.chart li::before,.chart li::after{content:'';position:absolute;top:0;right:50%;border-top:2px solid var(--line);width:50%;height:22px}
+.chart li::after{right:auto;left:50%;border-left:2px solid var(--line)}
+.chart li:only-child::after,.chart li:only-child::before{display:none}
+.chart li:only-child{padding-top:0}
+.chart li:first-child::before,.chart li:last-child::after{border:0 none}
+.chart li:last-child::before{border-right:2px solid var(--line);border-radius:0 8px 0 0}
+.chart li:first-child::after{border-radius:8px 0 0 0}
+.chart ul ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid var(--line);height:22px}
+.chart>ul{padding-top:0}
+.couple{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.ring{color:var(--accent);font-size:14px}
+.tree-node{display:inline-flex;align-items:center;gap:7px;text-align:left;padding:5px 9px 5px 5px;border-radius:var(--r,10px);
+  background:var(--node);border:1.5px solid var(--node-b);cursor:pointer;min-width:150px;max-width:220px;white-space:normal;
+  box-shadow:var(--shadow,0 1px 3px rgba(0,0,0,.08));transition:transform .15s,box-shadow .15s}
+.tree-node:hover,.tree-node:focus{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.15);outline:none}
+.tree-node.m{border-left:4px solid var(--male)}.tree-node.f{border-left:4px solid var(--female)}
+.tree-node.pri{background:var(--pri-bg);border-color:var(--accent)}
+.tree-node.on-path{box-shadow:0 0 0 3px var(--accent);}
+.tree-node.hidden-kids{background:repeating-linear-gradient(45deg,var(--node),var(--node) 6px,var(--bg) 6px,var(--bg) 12px);
+  color:var(--muted);font-size:12px;cursor:default;min-width:0;justify-content:center;text-align:center;border-style:dashed}
+.tn-ph{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;background:#e3e8ef}
+.tn-t{display:flex;flex-direction:column;line-height:1.25}
+.tree-node .name{font-size:12.5px;font-weight:600;color:var(--text)}
+.tree-node .dates{font-size:11px;color:var(--muted)}
+.pri-star{color:var(--accent);margin-right:3px}
+.chart ul.anc{flex-direction:column-reverse}
+/* общие элементы движка */
+#tip{position:fixed;z-index:999;display:none;background:var(--card);color:var(--text);border:1px solid var(--node-b);border-radius:10px;
+  padding:8px 10px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:250px;pointer-events:none}
+.tip-ph{width:56px;height:56px;border-radius:8px;object-fit:cover;float:left;margin-right:8px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,40px);opacity:0;transition:.3s;background:#222;color:#fff;
+  padding:10px 16px;border-radius:12px;font-size:14px;z-index:1000;max-width:min(92vw,520px);text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.card-head{display:flex;gap:14px;align-items:flex-start}
+.card-ph{width:96px;height:120px;object-fit:cover;border-radius:10px;flex:none;background:#e3e8ef}
+.card h2{margin:0 0 4px;font-size:1.25em}
+.card-life{color:var(--muted);font-size:.9em}
+.chips{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:.75em;background:var(--bg);border:1px solid var(--node-b);border-radius:20px;padding:2px 9px}
+.chip.q{border-color:var(--accent)}
+.card-par{margin:12px 0;font-size:.92em;line-height:1.6}
+.timeline{list-style:none;padding:0 0 0 14px;margin:10px 0;border-left:2px solid var(--line)}
+.timeline li{position:relative;padding:5px 0 5px 14px;font-size:.92em}
+.timeline .ti{position:absolute;left:-26px;top:3px;background:var(--card);border-radius:50%;width:22px;text-align:center}
+.card-note,.card-src{font-size:.85em;color:var(--muted);background:var(--bg);border-radius:8px;padding:8px 10px;margin-top:8px;overflow-wrap:anywhere}
+.card-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.card-act button{border:1px solid var(--node-b);background:var(--card);color:var(--text);border-radius:20px;padding:7px 12px;cursor:pointer;font:inherit;font-size:.85em}
+.card-act button:hover{border-color:var(--accent)}
+.plink{color:var(--link,var(--accent));text-decoration:none;font-weight:600}
+.s-ph{width:30px;height:30px;border-radius:50%;object-fit:cover}
+.search-res{position:absolute;z-index:200;background:var(--card);border:1px solid var(--node-b);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);
+  max-height:60vh;overflow:auto;display:none;width:100%;left:0;top:calc(100% + 4px)}
+.search-res a{display:flex;gap:10px;align-items:center;padding:8px 12px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--bg)}
+.search-res a:hover{background:var(--bg)}.search-res small{display:block;color:var(--muted)}.s-empty{padding:12px;color:var(--muted)}
