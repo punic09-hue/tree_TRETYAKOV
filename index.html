@@ -176,8 +176,11 @@ let MAP=null,PROV=(store.get('mapprov')||'yandex');const PL=window.TREE_PLACES||
 const PROVS={yandex:{n:'Яндекс',crs:()=>L.CRS.EPSG3395,url:'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU',att:'© Яндекс'},
  google:{n:'Google',crs:()=>L.CRS.EPSG3857,url:'https://mt{s}.google.com/vt/lyrs=m&hl=ru&x={x}&y={y}&z={z}',sub:'0123',att:'© Google'}};
 const EVI={'Рождение':'👶','Крещение':'👶','Брак':'💍','Смерть':'✝','Погребение':'⚱','Проживание':'🏠'};
+const PN=Object.fromEntries((window.TREE_PERSONS||[]).map(p=>[p.id,p.name]));
+function evLink(e){let t=App.esc(e.w),hit=0;e.ids.forEach(id=>{const n=App.esc(PN[id]||'');if(n&&t.includes(n)){t=t.replace(n,`<a href="#/person/${id}">${n}</a>`);hit=1;}});
+ return hit?t:`<a href="#/person/${e.ids[0]}">${t}</a>`;}
 function placeHtml(p,lim){const ev=p.events||[],more=ev.length>lim;
- const evh=ev.slice(0,lim).map(e=>`<li><b>${App.esc(e.d)}</b> ${EVI[e.t]||'•'} ${App.esc(e.t)}: ${e.ids.length?`<a href="#/person/${e.ids[0]}">${App.esc(e.w)}</a>`:e.w?App.esc(e.w):!e.hid?'<span class="muted">—</span>':'<span class="muted">лицо, родившееся после 1925 г. (имя не публикуется)</span>'}</li>`).join('');
+ const evh=ev.slice(0,lim).map(e=>`<li><b>${App.esc(e.d)}</b> ${EVI[e.t]||'•'} ${App.esc(e.t)}: ${e.ids.length?evLink(e):e.w?App.esc(e.w):!e.hid?'<span class="muted">—</span>':'<span class="muted">лицо, родившееся после 1925 г. (имя не публикуется)</span>'}</li>`).join('');
  const ll=p.lat&&p.lon?p.lat+','+p.lon:encodeURIComponent(p.addr||p.name);
  return `<div class="pp"><div class="pc">${App.esc(p.cat)}${p.period?' · '+App.esc(p.period):''}</div><b>${App.esc(p.name)}</b><div class="muted">${App.esc(p.addr||'')}</div>
  ${p.about?`<p>${App.esc(p.about)}</p>`:''}${p.who?`<p class="muted">${App.esc(p.who)}</p>`:''}
