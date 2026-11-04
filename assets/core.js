@@ -25,9 +25,18 @@ const img=(p,c)=>`<img class="${c}" src="${photo(p)}" alt="" loading="lazy" oner
 /* ---------- дерево ---------- */
 const node=p=>p?`<span class="tree-node ${p.sex==='Ж'?'f':'m'} ${p.pri?'pri':''}" data-id="${p.id}" tabindex="0">${img(p,'tn-ph')}<span class="tn-t"><span class="name">${p.pri?'<span class="pri-star">★</span>':''}${esc(p.name)}</span><span class="dates">${life(p)}</span></span></span>`:'';
 const couple=p=>`<div class="couple">${node(p)}${(p.spouses||[]).map(id=>P[id]).filter(Boolean).map(s=>'<span class="ring">⚭</span>'+node(s)).join('')}</div>`;
+const hid=p=>p.hiddenKids?`<ul><li><div class="couple"><span class="tree-node hidden-kids">🔒 потомки скрыты<br><small>родились после ${C.cutoff}</small></span></div></li></ul>`:'';
 function desc(id,seen){const p=P[id];if(!p||seen.has(id))return'';seen.add(id);
   const k=kidsOf(id).filter(x=>x.father===id||!P[x.father]);
-  return `<li>${couple(p)}${k.length?'<ul>'+k.map(x=>desc(x.id,seen)).join('')+'</ul>':''}${p.hiddenKids?`<ul><li><div class="couple"><span class="tree-node hidden-kids">🔒 потомки скрыты<br><small>родились после ${C.cutoff}</small></span></div></li></ul>`:''}</li>`;}
+  const sp=(p.spouses||[]).map(x=>P[x]).filter(Boolean);
+  const sub=list=>list.length?'<ul>'+list.map(x=>desc(x.id,seen)).join('')+'</ul>':'';
+  if(sp.length<2)return `<li>${couple(p)}${sub(k)}${hid(p)}</li>`;
+  /* несколько браков: под человеком — отдельная ветка на каждого супруга со своими детьми */
+  const ok=p.sex==='Ж'?'father':'mother';
+  const br=sp.map((s,i)=>`<li><div class="couple marr"><span class="ring" title="${i+1}-й брак">⚭ ${i+1}</span>${node(s)}</div>${sub(k.filter(x=>x[ok]===s.id))}</li>`);
+  const rest=k.filter(x=>!sp.some(s=>s.id===x[ok]));
+  if(rest.length)br.push(`<li><div class="couple marr"><span class="tree-node unk">${p.sex==='Ж'?'отец':'мать'} не установлен${p.sex==='Ж'?'':'а'}</span></div>${sub(rest)}</li>`);
+  return `<li><div class="couple">${node(p)}</div><ul class="marrs">${br.join('')}</ul>${hid(p)}</li>`;}
 function anc(id,d){const p=P[id];if(!p)return'';const par=[P[p.father],P[p.mother]].filter(Boolean);
   return `<li>${node(p)}${d&&par.length?'<ul>'+par.map(x=>anc(x.id,d-1)).join('')+'</ul>':''}</li>`;}
 const Tree={mode:'all',who:C.root,scale:1,
