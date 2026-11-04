@@ -14,7 +14,7 @@ window.TREE_CONFIG={
  "levels": {"viz": "Верх-Исетский завод", "ekb": "Екатеринбург", "ru": "Россия", "world": "Мир"},
  "mapCenter": [56.84, 60.58],
  "mapZoom": 12,
- "updated": "03.11.2026",
+ "updated": "04.11.2026",
  "cutoff": 1925,
  "rootNum": "89",
  "focusNum": "48"
